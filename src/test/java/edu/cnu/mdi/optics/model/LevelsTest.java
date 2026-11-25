@@ -1,6 +1,7 @@
 package edu.cnu.mdi.optics.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,6 +28,29 @@ class LevelsTest {
                 for (Level.Target target : level.targets()) {
                     assertTrue(Geometry.distanceToSegment(target.x(), target.y(), wall.x(), wall.y(),
                             wall.heading(), wall.length()) > 0.5, level.name() + ": wall on target");
+                }
+            }
+        }
+    }
+
+    /**
+     * Beams cross a row or column only at grid points, so a gap one square wide
+     * looks open but cannot be passed: both its edges are wall.
+     */
+    @Test
+    void noGapInALineOfWallsIsTooNarrowToPass() {
+        for (Level level : levels) {
+            for (Level.Wall a : level.walls()) {
+                for (Level.Wall b : level.walls()) {
+                    double tx = Geometry.dirY(a.heading());
+                    double ty = -Geometry.dirX(a.heading());
+                    double dx = b.x() - a.x();
+                    double dy = b.y() - a.y();
+                    boolean inLine = a != b && (a.heading() - b.heading()) % 180 == 0
+                            && Math.abs(dx * ty - dy * tx) < 1.0e-9;
+                    double gap = Math.abs(dx * tx + dy * ty) - (a.length() + b.length()) / 2;
+                    assertFalse(inLine && gap > 1.0e-9 && gap < 2 - 1.0e-9,
+                            level.name() + ": gap of " + gap + " between " + a + " and " + b);
                 }
             }
         }
