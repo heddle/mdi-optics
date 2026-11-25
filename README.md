@@ -9,8 +9,6 @@ onto every detector with mirrors, beam splitters and lenses.
 
 [Download the latest runnable ZIP](https://github.com/heddle/mdi-optics/releases/latest/download/mdi-optics-runnable.zip) · [Release notes](https://github.com/heddle/mdi-optics/releases/latest).
 
-These links work once the first version is released.
-
 With Java 17 or newer installed, extract the entire ZIP, open a terminal in the
 extracted folder, and run:
 
@@ -133,8 +131,7 @@ gh workflow run release-build.yml --repo heddle/mdi-optics --ref main
 **Release** version X.Y.Z:
 
 1. Set the version in `pom.xml` to `X.Y.Z`, date the entry in `CHANGELOG.md`,
-   and commit on `main`. Before the first release, also remove "These links work
-   once the first version is released." above.
+   and commit on `main`.
 2. Create an annotated tag `vX.Y.Z` and push `main` and the tag. Pushing the tag
    publishes.
 
@@ -156,7 +153,7 @@ bash scripts/build-runnable.sh
 ```
 
 ```bash
-bash scripts/smoke-test-zip.sh target/mdi-optics-0.1.0-SNAPSHOT-runnable.zip
+bash scripts/smoke-test-zip.sh target/mdi-optics-0.1.0-runnable.zip
 ```
 
 The check in `scripts/ReleaseDesktopSmoke.java` plays levels 1 and 6 and counts

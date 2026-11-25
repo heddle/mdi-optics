@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>edu.cnu</groupId>
 	<artifactId>mdi-optics</artifactId>
-	<version>0.1.0-SNAPSHOT</version>
+	<version>0.1.0</version>
 	<name>MDI Light Bench</name>
 	<description>A laser puzzle with mirrors, beam splitters and lenses, built on the MDI framework.</description>
 	<licenses>
