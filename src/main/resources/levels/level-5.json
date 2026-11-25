@@ -1,9 +1,9 @@
 {
   "name": "Three ways",
-  "hint": "Each target needs only a quarter of the beam.",
+  "hint": "The left target needs half the beam; the other two need a quarter each.",
   "laser": { "x": 8, "y": 1, "heading": 0 },
   "targets": [
-    { "x": 2, "y": 11, "power": 0.25 },
+    { "x": 2, "y": 11, "power": 0.5 },
     { "x": 8, "y": 11, "power": 0.25 },
     { "x": 14, "y": 11, "power": 0.25 }
   ],
