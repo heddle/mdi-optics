@@ -26,7 +26,7 @@ import edu.cnu.mdi.optics.model.Piece;
 import edu.cnu.mdi.undo.ItemEdits;
 
 /**
- * A mirror or splitter the player has placed. It moves from grid point to grid
+ * A mirror, splitter or lens the player has placed. It moves from grid point to grid
  * point and turns in steps of {@value #TURN} degrees; its azimuth is the
  * direction its face points.
  *
@@ -45,16 +45,20 @@ final class OpticItem extends PathBasedItem {
     private static final Color HANDLE = new Color(0xffd24d);
 
     private final Kind kind;
+    private final double focalLength;
     private final BiPredicate<Point, OpticItem> open;
 
     /**
-     * @param open whether a grid point is free for the given piece to move to
+     * @param focalLength the level's focal length, used only by lenses
+     * @param open        whether a grid point is free for the given piece to move to
      */
-    OpticItem(Layer layer, Kind kind, int x, int y, double heading, BiPredicate<Point, OpticItem> open) {
+    OpticItem(Layer layer, Kind kind, int x, int y, double heading, double focalLength,
+            BiPredicate<Point, OpticItem> open) {
         super(layer);
         this.kind = kind;
+        this.focalLength = focalLength;
         this.open = open;
-        setDisplayName(kind == Kind.MIRROR ? "Mirror" : "Splitter");
+        setDisplayName(name(kind));
         setLocked(false);
         setSelectable(true);
         setDraggable(true);
@@ -67,6 +71,16 @@ final class OpticItem extends PathBasedItem {
         setStyleEditable(false);
         setFillFocus(false);
         place(x, y, heading);
+    }
+
+    /** What a kind of piece is called. */
+    static String name(Kind kind) {
+        return switch (kind) {
+            case MIRROR -> "Mirror";
+            case SPLITTER -> "Splitter";
+            case CONVERGING -> "Converging lens";
+            case DIVERGING -> "Diverging lens";
+        };
     }
 
     /** This item as the ray tracer sees it. */
@@ -179,6 +193,9 @@ final class OpticItem extends PathBasedItem {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             Point center = getFocusPoint(container);
             Point handle = getRotatePoint(container);
+            if (kind.isLens()) {
+                drawFocalPoints(g, container);
+            }
             g.setStroke(new BasicStroke(1.5f));
             g.setColor(HANDLE);
             g.draw(new Line2D.Double(center, handle));
@@ -187,6 +204,28 @@ final class OpticItem extends PathBasedItem {
             g.drawOval(handle.x - RPSIZE2, handle.y - RPSIZE2, RPSIZE, RPSIZE);
         } finally {
             g.dispose();
+        }
+    }
+
+    /** Marks the points one focal length away on each side of a lens. */
+    private void drawFocalPoints(Graphics2D g, IContainer container) {
+        Point2D.Double lens = getFocus();
+        double dx = Geometry.dirX(getAzimuth()) * focalLength;
+        double dy = Geometry.dirY(getAzimuth()) * focalLength;
+        Point near = new Point();
+        Point far = new Point();
+        container.worldToLocal(near, lens.x - dx, lens.y - dy);
+        container.worldToLocal(far, lens.x + dx, lens.y + dy);
+
+        g.setColor(new Color(HANDLE.getRed(), HANDLE.getGreen(), HANDLE.getBlue(), 110));
+        g.setStroke(new BasicStroke(1f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER, 10f,
+                new float[] {3f, 6f}, 0f));
+        g.draw(new Line2D.Double(near, far));
+        g.setStroke(new BasicStroke(2f));
+        g.setColor(HANDLE);
+        for (Point p : new Point[] {near, far}) {
+            g.drawLine(p.x - 5, p.y - 5, p.x + 5, p.y + 5);
+            g.drawLine(p.x - 5, p.y + 5, p.x + 5, p.y - 5);
         }
     }
 
@@ -215,7 +254,8 @@ final class OpticItem extends PathBasedItem {
     public void getFeedbackStrings(IContainer container, Point screenPoint, Point2D.Double worldPoint,
             List<String> feedback) {
         if (contains(container, screenPoint)) {
-            feedback.add(getDisplayName() + " facing " + ((getAzimuth() + 360) % 360) + "°");
+            feedback.add(getDisplayName() + " facing " + ((getAzimuth() + 360) % 360) + "°"
+                    + (kind.isLens() ? ", focal length " + focalLength : ""));
         }
     }
 }

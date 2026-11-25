@@ -216,7 +216,8 @@ public final class BoardView extends BaseView {
         if (remaining(kind) <= 0 || !isOpen(new Point(x, y), null)) {
             return null;
         }
-        OpticItem item = new OpticItem(getDefaultLayer(), kind, x, y, NEW_PIECE_HEADING, this::isOpen);
+        OpticItem item = new OpticItem(getDefaultLayer(), kind, x, y, NEW_PIECE_HEADING,
+                level().focalLength(), this::isOpen);
         board().recordEdit(ItemEdits.created("Place " + item.getDisplayName(), board(), item));
         board().selectAllItems(false);
         getDefaultLayer().selectItem(item, true);
@@ -276,7 +277,8 @@ public final class BoardView extends BaseView {
         panel.add(Box.createVerticalStrut(14));
 
         for (Kind kind : Kind.values()) {
-            DrawnToggleButton button = new DrawnToggleButton(new PalettePainter(kind, () -> remaining(kind)));
+            DrawnToggleButton button = new DrawnToggleButton(
+                    new PalettePainter(kind, () -> remaining(kind), () -> level().focalLength()));
             button.setToolTipText("Click here, then click a grid point");
             button.setRolloverEnabled(true);
             button.setMaximumSize(button.getPreferredSize());

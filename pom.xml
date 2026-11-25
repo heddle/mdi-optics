@@ -6,7 +6,7 @@
 	<artifactId>mdi-optics</artifactId>
 	<version>0.1.0-SNAPSHOT</version>
 	<name>MDI Light Bench</name>
-	<description>A laser, mirror and beam-splitter puzzle built on the MDI framework.</description>
+	<description>A laser puzzle with mirrors, beam splitters and lenses, built on the MDI framework.</description>
 	<licenses>
 		<license>
 			<name>MIT License</name>

@@ -1,7 +1,7 @@
 # Light Bench
 
 A laser puzzle built on [MDI](https://github.com/heddle/mdi). Steer the beam
-onto every target with mirrors and beam splitters.
+onto every detector with mirrors, beam splitters and lenses.
 
 ![The first level, solved](docs/level-1.png)
 
@@ -23,12 +23,24 @@ mvn compile exec:java
 - Undo and redo with the buttons or Cmd/Ctrl+Z and Cmd/Ctrl+Shift+Z. **Clear**
   removes every piece and can be undone.
 
-A mirror reflects the whole beam. A splitter reflects half and lets half
-through. Both work from either side. Walls, targets and the laser stop the beam.
-The number under a target is the share of the laser's power it needs.
+| Piece | What it does |
+| --- | --- |
+| Mirror | Reflects the whole beam. |
+| Splitter | Reflects half and lets half through. |
+| Converging lens | Brings parallel rays together one focal length beyond it. |
+| Diverging lens | Spreads parallel rays as if from one focal length behind it. |
 
-There are five levels, and you can move between them freely. Each needs every
-piece you are given.
+Every piece works from either side. Walls, detectors and the laser stop the
+beam. The number under a detector is the share of the laser's power it needs. A
+detector with cross hairs is small, so rays must pass close to its center.
+
+Levels 1 to 5 use mirrors and splitters. In levels 6 to 9 the laser sends three
+parallel rays, which lenses can focus or spread. Select a lens to see its focal
+points. You can move between levels freely, and each needs every piece you are
+given.
+
+The lenses are ideal thin lenses. Turning one makes it focus farther along a
+beam that meets it at an angle, which gives some levels a second solution.
 
 ## How it is put together
 
@@ -44,7 +56,7 @@ left are worked out from them.
 
 ## Add a level
 
-Add `src/main/resources/levels/level-6.json` (and so on, without gaps):
+Add `src/main/resources/levels/level-10.json` (and so on, without gaps):
 
 ```json
 {
@@ -54,12 +66,21 @@ Add `src/main/resources/levels/level-6.json` (and so on, without gaps):
   "targets": [ { "x": 12, "y": 9, "power": 1.0 } ],
   "walls": [ { "x": 6, "y": 6, "heading": 90, "length": 4 } ],
   "mirrors": 1,
-  "splitters": 0
+  "splitters": 0,
+  "converging": 0,
+  "diverging": 0,
+  "focalLength": 4
 }
 ```
 
 The board runs from (0, 0) at the bottom left to (16, 12). Headings are degrees
-clockwise from up. A wall runs at right angles to its heading.
+clockwise from up. A wall runs at right angles to its heading. Optional settings:
+
+- `"rays": 3` in `laser` sends three parallel rays, a third of a square apart,
+  each with a third of the power.
+- `"radius"` in a target makes it smaller than the usual 0.35.
+- `focalLength`, in squares, applies to every lens in the level. It is 4 if
+  left out.
 
 The tests require a known solution for each level, in
 `src/test/java/edu/cnu/mdi/optics/model/Solutions.java` (spoilers), and check by

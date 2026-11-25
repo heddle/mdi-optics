@@ -8,7 +8,7 @@ import edu.cnu.mdi.app.BaseMDIApplication;
 import edu.cnu.mdi.optics.view.BoardView;
 import edu.cnu.mdi.util.PropertyUtils;
 
-/** Light Bench: steer a laser onto its targets with mirrors and beam splitters. */
+/** Light Bench: steer a laser onto its detectors with mirrors, splitters and lenses. */
 public final class OpticsApp extends BaseMDIApplication {
 
     public OpticsApp(Object... keyVals) {

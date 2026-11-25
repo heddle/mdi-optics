@@ -21,6 +21,7 @@ import javax.swing.SwingUtilities;
 import edu.cnu.mdi.component.DrawnToggleButton;
 import edu.cnu.mdi.desktop.Desktop;
 import edu.cnu.mdi.optics.OpticsApp;
+import edu.cnu.mdi.optics.model.Kind;
 import edu.cnu.mdi.optics.model.Piece;
 import edu.cnu.mdi.optics.model.Solutions;
 import edu.cnu.mdi.util.PropertyUtils;
@@ -88,19 +89,25 @@ public final class DesktopSmoke {
             key(KeyEvent.VK_Z, Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx());
             check(view.pieces().size() == 1, "undo did not bring the mirror back");
 
-            int last = view.levelCount() - 1;
-            SwingUtilities.invokeAndWait(() -> {
-                view.load(last);
-                for (Piece wanted : Solutions.ALL.get(last)) {
-                    OpticItem item = view.place(wanted.kind(), (int) wanted.x(), (int) wanted.y());
-                    for (int i = 0; i < 8 && Math.abs((item.getAzimuth() - wanted.heading()) % 180) > 1.0e-6; i++) {
-                        item.turn();
-                    }
-                }
-            });
+            // A lens level through the mouse: the wrong distance, then drag to the right one.
+            SwingUtilities.invokeAndWait(() -> view.load(5));
             pause();
-            screenshot("level-5-solved");
-            check(view.isSolved(), "level 5 not solved");
+            screenshot("level-6-start");
+            SwingUtilities.invokeAndWait(() -> palette().get(Kind.CONVERGING.ordinal()).doClick());
+            click(6, 6);
+            check(view.pieces().size() == 1 && !view.isSolved(), "lens at the wrong distance");
+            screenshot("level-6-unfocused");
+            drag(pixel(6, 6), pixel(9, 6));
+            check(view.isSolved(), "lens at the focal distance did not solve level 6");
+            screenshot("level-6-focused");
+
+            for (int level = 6; level < view.levelCount(); level++) {
+                int number = level;
+                SwingUtilities.invokeAndWait(() -> solve(number));
+                pause();
+                screenshot("level-" + (number + 1) + "-solved");
+                check(view.isSolved(), "level " + (number + 1) + " not solved");
+            }
             System.out.println("Desktop smoke passed; screenshots are in target/.");
         } finally {
             SwingUtilities.invokeAndWait(() -> {
@@ -133,6 +140,16 @@ public final class DesktopSmoke {
                 view.getIContainer().getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(),
                 modifiers, code, KeyEvent.CHAR_UNDEFINED)));
         pause();
+    }
+
+    private static void solve(int level) {
+        view.load(level);
+        for (Piece wanted : Solutions.ALL.get(level)) {
+            OpticItem item = view.place(wanted.kind(), (int) wanted.x(), (int) wanted.y());
+            for (int i = 0; i < 8 && Math.abs((item.getAzimuth() - wanted.heading()) % 180) > 1.0e-6; i++) {
+                item.turn();
+            }
+        }
     }
 
     private static Point pixel(int x, int y) {

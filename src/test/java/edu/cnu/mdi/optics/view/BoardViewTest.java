@@ -171,6 +171,20 @@ class BoardViewTest {
     }
 
     @Test
+    void theBoardOffersTheLensesALevelAllows() throws Exception {
+        onEdt(() -> {
+            view.load(6);
+            assertEquals(1, view.remaining(Kind.DIVERGING));
+            assertNull(view.place(Kind.CONVERGING, 5, 6), "not in this level");
+
+            OpticItem lens = view.place(Kind.DIVERGING, 5, 6);
+
+            assertEquals("Diverging lens", lens.getDisplayName());
+            assertTrue(view.isSolved(), "an upright lens is already square to this beam");
+        });
+    }
+
+    @Test
     void everyLevelCanBeSolvedOnTheBoard() throws Exception {
         onEdt(() -> {
             for (int level = 0; level < view.levelCount(); level++) {

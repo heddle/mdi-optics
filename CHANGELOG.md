@@ -2,5 +2,5 @@
 
 ## [Unreleased]
 
-- First version: five levels, mirrors and beam splitters, a drawn-button
-  palette, and undo and redo.
+- First version: nine levels, mirrors, beam splitters, converging and
+  diverging lenses, a drawn-button palette, and undo and redo.

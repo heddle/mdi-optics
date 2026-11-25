@@ -1,6 +1,6 @@
 {
   "name": "One lens, two detectors",
-  "hint": "Both detectors need every ray's share, and you have only one lens.",
+  "hint": "Each small detector needs half of all three rays, and you have only one lens.",
   "laser": { "x": 1, "y": 4, "heading": 90, "rays": 3 },
   "targets": [
     { "x": 10, "y": 4, "power": 0.5, "radius": 0.08 },

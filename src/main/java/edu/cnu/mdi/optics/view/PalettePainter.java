@@ -8,6 +8,8 @@ import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;
+import java.text.DecimalFormat;
+import java.util.function.DoubleSupplier;
 import java.util.function.IntSupplier;
 
 import javax.swing.AbstractButton;
@@ -22,10 +24,12 @@ final class PalettePainter implements ButtonPainter {
 
     private final Kind kind;
     private final IntSupplier remaining;
+    private final DoubleSupplier focalLength;
 
-    PalettePainter(Kind kind, IntSupplier remaining) {
+    PalettePainter(Kind kind, IntSupplier remaining, DoubleSupplier focalLength) {
         this.kind = kind;
         this.remaining = remaining;
+        this.focalLength = focalLength;
     }
 
     @Override
@@ -54,8 +58,18 @@ final class PalettePainter implements ButtonPainter {
 
         g.setColor(Color.WHITE);
         g.setFont(button.getFont().deriveFont(Font.BOLD, 14f));
-        g.drawString(kind == Kind.MIRROR ? "Mirror" : "Splitter", bounds.x + 66, middle - 2);
+        String title = switch (kind) {
+            case MIRROR -> "Mirror";
+            case SPLITTER -> "Splitter";
+            case CONVERGING -> "Converging";
+            case DIVERGING -> "Diverging";
+        };
+        g.drawString(title, bounds.x + 66, middle - 2);
         g.setFont(button.getFont().deriveFont(Font.PLAIN, 12f));
-        g.drawString(remaining.getAsInt() + " left", bounds.x + 66, middle + 15);
+        String detail = remaining.getAsInt() + " left";
+        if (kind.isLens()) {
+            detail += ", f = " + new DecimalFormat("0.#").format(focalLength.getAsDouble());
+        }
+        g.drawString(detail, bounds.x + 66, middle + 15);
     }
 }

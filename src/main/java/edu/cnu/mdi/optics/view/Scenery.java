@@ -42,7 +42,7 @@ final class Scenery {
             }
 
             int cell = pixel(container, 1, 0).x - pixel(container, 0, 0).x;
-            drawBeam(g, container, beam);
+            drawBeam(g, container, beam, level.laser().rays());
             drawWalls(g, container, level, cell);
             drawTargets(g, container, level, beam, cell);
             drawLaser(g, container, level.laser(), cell);
@@ -51,12 +51,13 @@ final class Scenery {
         }
     }
 
-    private static void drawBeam(Graphics2D g, IContainer container, RayTracer.Result beam) {
+    private static void drawBeam(Graphics2D g, IContainer container, RayTracer.Result beam, int rays) {
         for (RayTracer.Segment s : beam.segments()) {
             Line2D line = new Line2D.Double(pixel(container, s.x1(), s.y1()), pixel(container, s.x2(), s.y2()));
-            // Weaker beams are fainter and thinner.
-            double strength = Math.sqrt(s.power());
-            g.setStroke(new BasicStroke((float) (4 + 7 * strength), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            // Weaker beams are fainter and thinner. Several rays are drawn narrow, to stay apart.
+            double strength = Math.sqrt(Math.min(1, s.power() * rays));
+            float glow = (float) (4 + (rays > 1 ? 3 : 7) * strength);
+            g.setStroke(new BasicStroke(glow, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             g.setColor(new Color(255, 50, 60, (int) (30 + 60 * strength)));
             g.draw(line);
             g.setStroke(new BasicStroke((float) (1 + 2 * strength), BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -78,11 +79,13 @@ final class Scenery {
 
     private static void drawTargets(Graphics2D g, IContainer container, Level level, RayTracer.Result beam,
             int cell) {
-        int radius = (int) (cell * RayTracer.TARGET_RADIUS);
         for (int i = 0; i < level.targets().size(); i++) {
             Level.Target target = level.targets().get(i);
             boolean lit = level.isLit(i, beam);
             Point p = pixel(container, target.x(), target.y());
+            boolean small = target.radius() < RayTracer.TARGET_RADIUS;
+            // The disc is the size the beam has to hit, but never too small to see.
+            int radius = Math.max(6, (int) (cell * target.radius()));
             if (lit) {
                 g.setColor(new Color(90, 255, 140, 70));
                 g.fillOval(p.x - 2 * radius, p.y - 2 * radius, 4 * radius, 4 * radius);
@@ -92,6 +95,17 @@ final class Scenery {
             g.setStroke(new BasicStroke(2.5f));
             g.setColor(lit ? Color.WHITE : new Color(0xffd24d));
             g.drawOval(p.x - radius, p.y - radius, 2 * radius, 2 * radius);
+            if (small) {
+                // Cross hairs, so a small detector is not lost among the rays.
+                g.setStroke(new BasicStroke(1.5f));
+                int inner = radius + 3;
+                int outer = radius + 9;
+                g.drawLine(p.x - outer, p.y, p.x - inner, p.y);
+                g.drawLine(p.x + inner, p.y, p.x + outer, p.y);
+                g.drawLine(p.x, p.y - outer, p.x, p.y - inner);
+                g.drawLine(p.x, p.y + inner, p.x, p.y + outer);
+                radius = outer;
+            }
 
             // How much of the laser's power this target needs.
             String need = Math.round(target.power() * 100) + "%";
@@ -108,12 +122,17 @@ final class Scenery {
             rotated.translate(p.x, p.y);
             // The shape points up; headings run clockwise from up, as screen rotations do.
             rotated.rotate(Math.toRadians(laser.heading()));
-            int w = (int) (cell * 0.5);
+            // Wide enough to cover every ray it sends.
+            int w = (int) (cell * (laser.rays() > 1 ? 0.85 : 0.5));
             int h = (int) (cell * 0.8);
             rotated.setColor(new Color(0xd8dce6));
             rotated.fillRoundRect(-w / 2, -h / 2, w, h, 8, 8);
             rotated.setColor(new Color(0xff3a44));
-            rotated.fillRect(-w / 6, -h / 2 - 5, Math.max(2, w / 3), 7);
+            int nozzle = Math.max(3, (int) (cell * (laser.rays() > 1 ? 0.08 : 0.17)));
+            for (int i = 0; i < laser.rays(); i++) {
+                int at = (int) Math.round((i - (laser.rays() - 1) / 2.0) * RayTracer.RAY_SPACING * cell);
+                rotated.fillRect(at - nozzle / 2, -h / 2 - 5, nozzle, 7);
+            }
         } finally {
             rotated.dispose();
         }
