@@ -6,8 +6,8 @@ import java.util.List;
 
 /**
  * Follows the laser beam across a level. Mirrors reflect it, splitters divide
- * it into two beams of half the power, and walls, targets and the edge of the
- * board stop it.
+ * it into two beams of half the power, and walls, targets, the laser itself and
+ * the edge of the board stop it.
  */
 public final class RayTracer {
 
@@ -17,6 +17,7 @@ public final class RayTracer {
     public static final double MARGIN = 0.5;
 
     /** Beams weaker than this are dropped. */
+    private static final double LASER_RADIUS = 0.35;
     private static final double MIN_POWER = 1.0 / 64;
     /** Stops mirrors that face each other from looping forever. */
     private static final int MAX_SEGMENTS = 200;
@@ -57,6 +58,12 @@ public final class RayTracer {
                     hitPiece = null;
                     hitTarget = -1;
                 }
+            }
+            // The beam starts inside the laser, so this only stops light coming back.
+            double back = hitCircle(ray, laser.x(), laser.y(), LASER_RADIUS);
+            if (back < distance) {
+                distance = back;
+                hitPiece = null;
             }
             for (int i = 0; i < level.targets().size(); i++) {
                 Level.Target target = level.targets().get(i);

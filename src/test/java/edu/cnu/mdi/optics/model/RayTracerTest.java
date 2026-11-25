@@ -85,6 +85,15 @@ class RayTracerTest {
     }
 
     @Test
+    void theLaserStopsLightSentBackToIt() {
+        RayTracer.Result result = RayTracer.trace(level(List.of(target(5, 9)), List.of()),
+                List.of(new Piece(Kind.MIRROR, 8, 3, 90)));
+
+        assertEquals(2, result.segments().size());
+        assertTrue(result.segments().get(1).x2() > 1, "stopped at the laser, not beyond it");
+    }
+
+    @Test
     void facingMirrorsDoNotLoopForever() {
         // The laser sits between two mirrors that bounce the beam back and forth.
         RayTracer.Result result = RayTracer.trace(level(List.of(target(5, 9)), List.of()),
