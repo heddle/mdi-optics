@@ -1,0 +1,16 @@
+{
+  "name": "Three ways",
+  "hint": "Each target needs only a quarter of the beam.",
+  "laser": { "x": 8, "y": 1, "heading": 0 },
+  "targets": [
+    { "x": 2, "y": 11, "power": 0.25 },
+    { "x": 8, "y": 11, "power": 0.25 },
+    { "x": 14, "y": 11, "power": 0.25 }
+  ],
+  "walls": [
+    { "x": 5, "y": 8, "heading": 0, "length": 4 },
+    { "x": 11, "y": 9, "heading": 0, "length": 4 }
+  ],
+  "mirrors": 2,
+  "splitters": 2
+}

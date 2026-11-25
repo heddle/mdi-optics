@@ -1,0 +1,9 @@
+{
+  "name": "Around the wall",
+  "hint": "Beams can travel diagonally too.",
+  "laser": { "x": 1, "y": 6, "heading": 90 },
+  "targets": [ { "x": 14, "y": 6, "power": 1.0 } ],
+  "walls": [ { "x": 8, "y": 6, "heading": 90, "length": 4 } ],
+  "mirrors": 2,
+  "splitters": 0
+}

@@ -1,0 +1,9 @@
+{
+  "name": "Two at once",
+  "hint": "A splitter reflects half the beam and lets the other half through.",
+  "laser": { "x": 1, "y": 4, "heading": 90 },
+  "targets": [ { "x": 14, "y": 4, "power": 0.5 }, { "x": 8, "y": 10, "power": 0.5 } ],
+  "walls": [],
+  "mirrors": 0,
+  "splitters": 1
+}

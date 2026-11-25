@@ -1,0 +1,9 @@
+{
+  "name": "First bounce",
+  "hint": "Place a mirror in the beam. Drag it to move it; drag its handle, or double-click it, to turn it.",
+  "laser": { "x": 1, "y": 3, "heading": 90 },
+  "targets": [ { "x": 12, "y": 9, "power": 1.0 } ],
+  "walls": [],
+  "mirrors": 1,
+  "splitters": 0
+}

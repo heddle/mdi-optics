@@ -1,0 +1,12 @@
+{
+  "name": "Far corners",
+  "hint": "Split the beam first, then steer each half on its own.",
+  "laser": { "x": 1, "y": 2, "heading": 90 },
+  "targets": [ { "x": 2, "y": 10, "power": 0.5 }, { "x": 14, "y": 10, "power": 0.5 } ],
+  "walls": [
+    { "x": 5, "y": 6, "heading": 0, "length": 8 },
+    { "x": 11, "y": 6, "heading": 0, "length": 2 }
+  ],
+  "mirrors": 2,
+  "splitters": 1
+}
