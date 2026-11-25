@@ -5,7 +5,24 @@ onto every detector with mirrors, beam splitters and lenses.
 
 ![The first level, solved](docs/level-1.png)
 
-## Run it
+## Run the prebuilt download
+
+[Download the latest runnable ZIP](https://github.com/heddle/mdi-optics/releases/latest/download/mdi-optics-runnable.zip) · [Release notes](https://github.com/heddle/mdi-optics/releases/latest).
+
+These links work once the first version is released.
+
+With Java 17 or newer installed, extract the entire ZIP, open a terminal in the
+extracted folder, and run:
+
+```bash
+java -jar mdi-optics.jar
+```
+
+Keep the bundled `lib` folder next to the JAR. No Maven build is required.
+
+Before publication, the release workflow smoke-tests the runnable ZIP on Linux, Windows, Intel macOS, and Apple Silicon macOS with Java 17, launching it without Maven.
+
+## Build from source
 
 You need Java 17 or later and Maven.
 
@@ -100,6 +117,53 @@ display, and writes screenshots to `target/`:
 mvn test-compile exec:java -Dexec.mainClass=edu.cnu.mdi.optics.view.DesktopSmoke -Dexec.classpathScope=test
 ```
 
+## Release
+
+The release workflow (`.github/workflows/release-build.yml`) builds the runnable
+ZIP, plays it with the mouse on Linux, Windows, Intel macOS and Apple Silicon
+macOS, publishes a GitHub release only if all four pass, and then checks that
+the links above resolve to it.
+
+**Rehearse** it without publishing anything, on the current `main`:
+
+```bash
+gh workflow run release-build.yml --repo heddle/mdi-optics --ref main
+```
+
+**Release** version X.Y.Z:
+
+1. Set the version in `pom.xml` to `X.Y.Z`, date the entry in `CHANGELOG.md`,
+   and commit on `main`. Before the first release, also remove "These links work
+   once the first version is released." above.
+2. Create an annotated tag `vX.Y.Z` and push `main` and the tag. Pushing the tag
+   publishes.
+
+If a release fails before publication, push the fix to `main` and rerun it for
+the existing tag:
+
+```bash
+gh workflow run release-build.yml --repo heddle/mdi-optics --ref main -f release-tag=vX.Y.Z
+```
+
+The rerun builds the tagged code with the desktop check from `main`. The two
+macOS jobs pin Java 17.0.12 and retry once if the app stalls while starting, as
+`mdi-chaos` does.
+
+To build and check the ZIP on your own machine (this opens the game on screen):
+
+```bash
+bash scripts/build-runnable.sh
+```
+
+```bash
+bash scripts/smoke-test-zip.sh target/mdi-optics-0.1.0-SNAPSHOT-runnable.zip
+```
+
+The check in `scripts/ReleaseDesktopSmoke.java` plays levels 1 and 6 and counts
+nine levels, so update it when levels are added or reordered.
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). The ZIP includes the licenses of the libraries it bundles; the
+ones the libraries do not carry themselves are in `docs/runtime-licenses`, so
+update them when dependencies change.

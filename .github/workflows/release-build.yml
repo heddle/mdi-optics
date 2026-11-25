@@ -1,0 +1,193 @@
+name: Publish release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        description: Existing version tag to publish. Leave empty to rehearse without publishing.
+        required: false
+        type: string
+
+env:
+  # Empty for a rehearsal.
+  RELEASE_TAG: ${{ inputs.release-tag || (github.event_name == 'push' && github.ref_name) || '' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      artifact-id: ${{ steps.runnable.outputs.artifact-id }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ env.RELEASE_TAG && format('refs/tags/{0}', env.RELEASE_TAG) || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: Verify and package
+        run: |
+          [[ -z "$RELEASE_TAG" || "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          bash scripts/build-runnable.sh "$RELEASE_TAG"
+      - name: Upload runnable ZIP
+        id: runnable
+        uses: actions/upload-artifact@v7
+        with:
+          path: target/mdi-optics-*-runnable.zip
+          archive: false
+          if-no-files-found: error
+
+  desktop-smoke-linux:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Use this workflow revision's harness when recovering an existing tag.
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download runnable ZIP
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: release-assets
+          skip-decompress: true
+      - name: Install virtual desktop
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends xvfb xauth
+      - name: Verify packaged app on a virtual desktop
+        run: |
+          xvfb-run -a --server-args="-screen 0 1600x1000x24" \
+            bash scripts/smoke-test-zip.sh release-assets/mdi-optics-*-runnable.zip
+
+  desktop-smoke-windows:
+    needs: build
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Use this workflow revision's harness when recovering an existing tag.
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download runnable ZIP
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: release-assets
+          skip-decompress: true
+      - name: Verify packaged app on Windows
+        shell: bash
+        run: |
+          export JAVA_HOME="$(cygpath -u "$JAVA_HOME")"
+          bash scripts/smoke-test-zip.sh release-assets/mdi-optics-*-runnable.zip
+
+  desktop-smoke-macos:
+    needs: build
+    name: desktop-smoke-macos (${{ matrix.architecture }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15-intel
+            architecture: x64
+          - runner: macos-15
+            architecture: aarch64
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Use this workflow revision's harness when recovering an existing tag.
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          architecture: ${{ matrix.architecture }}
+          # Use the Java 17 update verified on both hosted macOS architectures.
+          java-version: '17.0.12'
+      - name: Download runnable ZIP
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: release-assets
+          skip-decompress: true
+      - name: Verify packaged app on macOS
+        shell: bash
+        run: |
+          zip="$(echo release-assets/mdi-optics-*-runnable.zip)"
+          status=0
+          bash scripts/smoke-test-zip.sh "$zip" || status=$?
+          if [[ "$status" -ne 75 ]]; then
+            exit "$status"
+          fi
+          echo "::warning::macOS desktop startup timed out. Retrying the full smoke test once."
+          bash scripts/smoke-test-zip.sh "$zip"
+
+  publish:
+    needs: [build, desktop-smoke-linux, desktop-smoke-windows, desktop-smoke-macos]
+    # Skipped for a rehearsal, and so is the public verification after it.
+    if: github.event_name == 'push' || inputs.release-tag != ''
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified runnable ZIP
+        uses: actions/download-artifact@v8
+        with:
+          artifact-ids: ${{ needs.build.outputs.artifact-id }}
+          path: release-assets
+          skip-decompress: true
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_NOTES: |
+            Extract the runnable ZIP and run `java -jar mdi-optics.jar` with Java 17 or newer. Keep the bundled `lib` folder next to the JAR.
+
+            The runnable ZIP passed desktop smoke tests with Java 17 and without Maven on:
+
+            - Linux
+            - Windows
+            - Intel macOS
+            - Apple Silicon macOS
+        run: |
+          set -euo pipefail
+          zip="release-assets/mdi-optics-${RELEASE_TAG#v}-runnable.zip"
+          unzip -tq "$zip"
+          mv "$zip" release-assets/mdi-optics-runnable.zip
+          gh release create "$RELEASE_TAG" "release-assets/mdi-optics-runnable.zip#Runnable ZIP (Java 17+)" \
+            --repo "$GITHUB_REPOSITORY" --verify-tag --latest \
+            --title "Light Bench $RELEASE_TAG" --generate-notes \
+            --notes "$RELEASE_NOTES"
+
+  verify-public-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - name: Verify public release links and smoke-test notes
+        run: python3 scripts/verify-public-release.py "$GITHUB_REPOSITORY" "$RELEASE_TAG"
