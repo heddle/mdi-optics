@@ -5,14 +5,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Follows the laser beam across a level. Mirrors reflect it, splitters divide
- * it into two beams of half the power, and walls, targets, the laser itself and
- * the edge of the board stop it.
+ * Follows the laser's rays across a level. Mirrors reflect them, splitters
+ * divide them into two of half the power, ideal thin lenses bend them, and
+ * walls, targets, the laser itself and the edge of the board stop them.
  */
 public final class RayTracer {
 
     /** How close to a target's center a beam must pass to hit it. */
     public static final double TARGET_RADIUS = 0.35;
+    /** Distance between neighbouring rays when the laser sends more than one. */
+    public static final double RAY_SPACING = 1.0 / 3;
     /** The beam may run this far past the outermost grid points. */
     public static final double MARGIN = 0.5;
 
@@ -27,7 +29,7 @@ public final class RayTracer {
     public record Segment(double x1, double y1, double x2, double y2, double power) {
     }
 
-    /** The beam's path, and the total power reaching each target, in level order. */
+    /** The paths of the rays, and the total power reaching each target, in level order. */
     public record Result(List<Segment> segments, List<Double> targetPower) {
     }
 
@@ -42,8 +44,14 @@ public final class RayTracer {
         double[] received = new double[level.targets().size()];
         ArrayDeque<Ray> pending = new ArrayDeque<>();
         Level.Laser laser = level.laser();
-        pending.add(new Ray(laser.x(), laser.y(), Geometry.dirX(laser.heading()),
-                Geometry.dirY(laser.heading()), 1, null));
+        double dx0 = Geometry.dirX(laser.heading());
+        double dy0 = Geometry.dirY(laser.heading());
+        for (int i = 0; i < laser.rays(); i++) {
+            // Side by side, centered on the laser, at right angles to the beam.
+            double offset = (i - (laser.rays() - 1) / 2.0) * RAY_SPACING;
+            pending.add(new Ray(laser.x() + offset * dy0, laser.y() - offset * dx0, dx0, dy0,
+                    1.0 / laser.rays(), null));
+        }
 
         while (!pending.isEmpty() && segments.size() < MAX_SEGMENTS) {
             Ray ray = pending.remove();
@@ -67,7 +75,7 @@ public final class RayTracer {
             }
             for (int i = 0; i < level.targets().size(); i++) {
                 Level.Target target = level.targets().get(i);
-                double s = hitCircle(ray, target.x(), target.y(), TARGET_RADIUS);
+                double s = hitCircle(ray, target.x(), target.y(), target.radius());
                 if (s < distance) {
                     distance = s;
                     hitPiece = null;
@@ -92,6 +100,8 @@ public final class RayTracer {
 
             if (hitTarget >= 0) {
                 received[hitTarget] += ray.power();
+            } else if (hitPiece != null && hitPiece.kind().isLens()) {
+                pending.add(refract(ray, hitPiece, level.focalLength(), x, y));
             } else if (hitPiece != null) {
                 double nx = Geometry.dirX(hitPiece.heading());
                 double ny = Geometry.dirY(hitPiece.heading());
@@ -112,6 +122,28 @@ public final class RayTracer {
             targetPower.add(power);
         }
         return new Result(List.copyOf(segments), List.copyOf(targetPower));
+    }
+
+    /**
+     * The ray leaving an ideal thin lens. Measured against the lens axis, its
+     * slope drops by h/f, where h is how far from the center it struck.
+     */
+    private static Ray refract(Ray ray, Piece lens, double focalLength, double x, double y) {
+        double nx = Geometry.dirX(lens.heading());
+        double ny = Geometry.dirY(lens.heading());
+        if (ray.dx() * nx + ray.dy() * ny < 0) {
+            nx = -nx; // the axis points the way the light is going
+            ny = -ny;
+        }
+        double tx = -ny;
+        double ty = nx;
+        double f = lens.kind() == Kind.CONVERGING ? focalLength : -focalLength;
+        double along = ray.dx() * nx + ray.dy() * ny;
+        double across = ray.dx() * tx + ray.dy() * ty;
+        double h = (x - lens.x()) * tx + (y - lens.y()) * ty;
+        double slope = across / along - h / f;
+        double norm = Math.hypot(1, slope);
+        return new Ray(x, y, (nx + slope * tx) / norm, (ny + slope * ty) / norm, ray.power(), lens);
     }
 
     private static double distanceToEdge(Ray ray) {

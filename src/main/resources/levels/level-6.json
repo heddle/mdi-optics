@@ -1,0 +1,10 @@
+{
+  "name": "Focus",
+  "hint": "This laser sends three rays, and the small detector needs all of them. A converging lens brings them together 4 squares beyond it. Select a lens to see its focal points.",
+  "laser": { "x": 1, "y": 6, "heading": 90, "rays": 3 },
+  "targets": [ { "x": 13, "y": 6, "power": 1.0, "radius": 0.08 } ],
+  "walls": [],
+  "mirrors": 0,
+  "splitters": 0,
+  "converging": 1
+}

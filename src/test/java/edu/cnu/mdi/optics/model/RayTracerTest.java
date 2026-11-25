@@ -112,6 +112,65 @@ class RayTracerTest {
     }
 
     @Test
+    void aConvergingLensBringsParallelRaysTogetherAtTheFocus() {
+        RayTracer.Result result = RayTracer.trace(lensLevel(0.35), List.of(new Piece(Kind.CONVERGING, 5, 6, 90)));
+
+        // Three rays in, bent once each; every bent ray passes through (9, 6).
+        List<RayTracer.Segment> after = result.segments().stream().filter(s -> near(s.x1(), 5)).toList();
+        assertEquals(3, after.size());
+        for (RayTracer.Segment s : after) {
+            assertEquals(6, heightAt(s, 9), EPS);
+        }
+    }
+
+    @Test
+    void aDivergingLensSpreadsRaysAsIfFromBehindIt() {
+        RayTracer.Result result = RayTracer.trace(lensLevel(0.35), List.of(new Piece(Kind.DIVERGING, 5, 6, 90)));
+
+        // As if they came from (1, 6), one focal length behind the lens.
+        for (RayTracer.Segment s : result.segments()) {
+            if (near(s.x1(), 5)) {
+                assertEquals(6, heightAt(s, 1), EPS);
+            }
+        }
+    }
+
+    @Test
+    void aLensWorksTheSameWhicheverWayItFaces() {
+        RayTracer.Result east = RayTracer.trace(lensLevel(0.35), List.of(new Piece(Kind.CONVERGING, 5, 6, 90)));
+        RayTracer.Result west = RayTracer.trace(lensLevel(0.35), List.of(new Piece(Kind.CONVERGING, 5, 6, -90)));
+
+        for (int i = 0; i < east.segments().size(); i++) {
+            assertEquals(east.segments().get(i).y2(), west.segments().get(i).y2(), EPS);
+        }
+    }
+
+    @Test
+    void aSmallDetectorNeedsTheRaysFocused() {
+        Level level = lensLevel(0.08);
+
+        assertEquals(1.0 / 3, RayTracer.trace(level, List.of()).targetPower().get(0), EPS);
+        assertTrue(level.isSolvedBy(RayTracer.trace(level, List.of(new Piece(Kind.CONVERGING, 9, 6, 90)))));
+        assertFalse(level.isSolvedBy(RayTracer.trace(level, List.of(new Piece(Kind.CONVERGING, 7, 6, 90)))),
+                "too far from the detector");
+    }
+
+    /** Three rays east from (1,6) and a detector at (13,6). */
+    private static Level lensLevel(double radius) {
+        return new Level("lens", "", new Level.Laser(1, 6, 90, 3), List.of(new Level.Target(13, 6, 1, radius)),
+                List.of(), 0, 0, 1, 1, 4);
+    }
+
+    private static boolean near(double a, double b) {
+        return Math.abs(a - b) < 1.0e-6;
+    }
+
+    /** Where the line through a segment is at a given x. */
+    private static double heightAt(RayTracer.Segment s, double x) {
+        return s.y1() + (s.y2() - s.y1()) * (x - s.x1()) / (s.x2() - s.x1());
+    }
+
+    @Test
     void sceneryAndTheEdgeOfTheBoardAreNotOpen() {
         Level level = level(List.of(target(12, 3)), List.of(new Level.Wall(6, 6, 90, 4)));
 

@@ -7,10 +7,9 @@ import java.util.Set;
 
 /**
  * Exhaustive search over what a player can build. Pieces sit on grid points and
- * turn in steps of 22.5 degrees, so beams only ever run along grid lines and
- * diagonals, and a piece does something only if it is centered on the beam.
- * Adding pieces in the order the beam reaches them therefore finds every
- * solution.
+ * turn in steps of 22.5 degrees, and a piece does something only if a ray passes
+ * within half its length of its center. Adding pieces in the order the light
+ * reaches them therefore finds every solution.
  */
 final class Solver {
 
@@ -58,7 +57,8 @@ final class Solver {
                 for (int y = 0; y <= Level.HEIGHT; y++) {
                     if (Geometry.distanceToSegment(x, y, (s.x1() + s.x2()) / 2, (s.y1() + s.y2()) / 2,
                             Math.toDegrees(Math.atan2(s.x2() - s.x1(), s.y2() - s.y1())) + 90,
-                            Math.hypot(s.x2() - s.x1(), s.y2() - s.y1())) < 1.0e-6 && level.isOpen(x, y)) {
+                            Math.hypot(s.x2() - s.x1(), s.y2() - s.y1())) <= Piece.LENGTH / 2
+                            && level.isOpen(x, y)) {
                         points.add(new Point(x, y));
                     }
                 }

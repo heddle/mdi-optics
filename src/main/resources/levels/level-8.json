@@ -1,0 +1,10 @@
+{
+  "name": "Turn and focus",
+  "hint": "Distance to the focus is measured along the light's path, around corners too.",
+  "laser": { "x": 1, "y": 2, "heading": 90, "rays": 3 },
+  "targets": [ { "x": 12, "y": 9, "power": 1.0, "radius": 0.08 } ],
+  "walls": [],
+  "mirrors": 1,
+  "splitters": 0,
+  "converging": 1
+}

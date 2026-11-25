@@ -13,8 +13,8 @@ class LevelsTest {
     private final List<Level> levels = Levels.load();
 
     @Test
-    void thereAreFiveLevels() {
-        assertEquals(5, levels.size());
+    void thereAreNineLevels() {
+        assertEquals(9, levels.size());
     }
 
     @Test
@@ -57,7 +57,7 @@ class LevelsTest {
     @Test
     void everyLevelNeedsAllItsPieces() {
         for (Level level : levels) {
-            assertNull(Solver.solve(level, level.mirrors() + level.splitters() - 1), level.name());
+            assertNull(Solver.solve(level, level.pieceCount() - 1), level.name());
         }
     }
 }

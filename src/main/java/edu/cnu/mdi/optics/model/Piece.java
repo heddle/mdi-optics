@@ -3,7 +3,7 @@ package edu.cnu.mdi.optics.model;
 import java.util.Objects;
 
 /**
- * A mirror or splitter on the board.
+ * A mirror, splitter or lens on the board.
  *
  * @param kind    what the piece does to a beam
  * @param x       center, in board units
@@ -12,7 +12,7 @@ import java.util.Objects;
  */
 public record Piece(Kind kind, double x, double y, double heading) {
 
-    /** Length of every mirror and splitter, in board units. */
+    /** Length of every piece, in board units. */
     public static final double LENGTH = 1.2;
 
     public Piece {

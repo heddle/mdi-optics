@@ -1,0 +1,14 @@
+{
+  "name": "Fan out",
+  "hint": "A diverging lens spreads the rays apart. Give each detector one.",
+  "laser": { "x": 1, "y": 6, "heading": 90, "rays": 3 },
+  "targets": [
+    { "x": 13, "y": 7, "power": 0.33, "radius": 0.2 },
+    { "x": 13, "y": 6, "power": 0.33, "radius": 0.2 },
+    { "x": 13, "y": 5, "power": 0.33, "radius": 0.2 }
+  ],
+  "walls": [],
+  "mirrors": 0,
+  "splitters": 0,
+  "diverging": 1
+}

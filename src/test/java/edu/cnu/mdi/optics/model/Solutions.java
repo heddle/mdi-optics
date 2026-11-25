@@ -1,5 +1,7 @@
 package edu.cnu.mdi.optics.model;
 
+import static edu.cnu.mdi.optics.model.Kind.CONVERGING;
+import static edu.cnu.mdi.optics.model.Kind.DIVERGING;
 import static edu.cnu.mdi.optics.model.Kind.MIRROR;
 import static edu.cnu.mdi.optics.model.Kind.SPLITTER;
 
@@ -15,7 +17,11 @@ public final class Solutions {
             List.of(new Piece(MIRROR, 13, 2, 135), new Piece(SPLITTER, 13, 9, 112.5),
                     new Piece(MIRROR, 13, 10, 45)),
             List.of(new Piece(SPLITTER, 8, 2, 45), new Piece(MIRROR, 2, 2, 45),
-                    new Piece(SPLITTER, 7, 2, 67.5), new Piece(MIRROR, 14, 9, 112.5)));
+                    new Piece(SPLITTER, 7, 2, 67.5), new Piece(MIRROR, 14, 9, 112.5)),
+            List.of(new Piece(CONVERGING, 9, 6, 90)),
+            List.of(new Piece(DIVERGING, 5, 6, 90)),
+            List.of(new Piece(MIRROR, 12, 2, 135), new Piece(CONVERGING, 12, 5, 0)),
+            List.of(new Piece(CONVERGING, 6, 4, 90), new Piece(SPLITTER, 8, 4, -45)));
 
     private Solutions() {
     }
