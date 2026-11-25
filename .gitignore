@@ -1,0 +1,21 @@
+# Build output 
+/target/
+*.class
+
+# Local IDE and operating-system files
+.idea/
+*.iml
+.classpath
+.project
+.settings/
+.vscode/
+.DS_Store
+Thumbs.db
+*~
+*.swp
+
+# Machine-specific configuration
+.env
+.env.*
+!.env.example
+*.log
